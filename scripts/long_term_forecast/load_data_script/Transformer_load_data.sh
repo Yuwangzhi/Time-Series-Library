@@ -3,7 +3,7 @@
 # Transformer model for load_data dataset
 # Using past 96 time points to predict future time points (96, 192, 336, 720)
 
-export CUDA_VISIBLE_DEVICES=0
+# export CUDA_VISIBLE_DEVICES=0
 
 model_name=Transformer
 

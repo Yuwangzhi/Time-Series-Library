@@ -15,8 +15,11 @@ REM Record start time
 echo Starting all model experiments at: %date% %time%
 echo.
 
-REM Create overall log file
-set "OVERALL_LOG=load_data_all_models_log_%date:~0,4%%date:~5,2%%date:~8,2%_%time:~0,2%%time:~3,2%%time:~6,2%.txt"
+REM Create results directory if it doesn't exist
+if not exist "..\..\..\results" mkdir "..\..\..\results"
+
+REM Create overall log file (save to results directory)
+set "OVERALL_LOG=..\..\..\results\load_data_all_models_log_%date:~0,4%%date:~5,2%%date:~8,2%_%time:~0,2%%time:~3,2%%time:~6,2%.txt"
 set "OVERALL_LOG=%OVERALL_LOG: =0%"
 echo Overall experiment log: %OVERALL_LOG%
 echo.

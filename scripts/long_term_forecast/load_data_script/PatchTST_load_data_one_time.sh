@@ -3,7 +3,7 @@
 # PatchTST model for load_data dataset
 # Using past 96 time points to predict future time points
 
-export CUDA_VISIBLE_DEVICES=0
+# export CUDA_VISIBLE_DEVICES=0
 
 model_name=PatchTST
 

@@ -48,8 +48,13 @@ def main():
     print(f"🚀 Starting all model experiments at: {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
     print()
     
-    # Create overall log file
-    overall_log = f"load_data_all_models_log_{start_time.strftime('%Y%m%d_%H%M%S')}.txt"
+    # Create results directory if it doesn't exist
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    results_dir = os.path.join(script_dir, "../../../results")
+    os.makedirs(results_dir, exist_ok=True)
+    
+    # Create overall log file (save to results directory)
+    overall_log = os.path.join(results_dir, f"load_data_all_models_log_{start_time.strftime('%Y%m%d_%H%M%S')}.txt")
     print(f"Overall experiment log: {overall_log}")
     print()
     

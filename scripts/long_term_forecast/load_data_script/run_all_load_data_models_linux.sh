@@ -4,6 +4,52 @@
 # This script will automatically execute all model scripts in sequence
 # Each model will run 4 experiments: 96->96, 96->192, 96->336, 96->720
 
+# Backend execution setup with nohup and setsid
+# Check if already running in background mode
+if [ "$1" != "--background" ]; then
+    echo "========================================================================"
+    echo "                    STARTING IN BACKGROUND MODE"
+    echo "========================================================================"
+    echo "Starting script in background with nohup and setsid..."
+    echo "This will allow the script to continue running even if SSH disconnects."
+    
+    # Get the directory where this script is located for log file
+    SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+    BACKGROUND_LOG="$SCRIPT_DIR/../../../nohup_$(basename $0)_$(date +%Y%m%d_%H%M%S).log"
+    
+    echo "Log file will be: $BACKGROUND_LOG"
+    echo "You can monitor progress with: tail -f $BACKGROUND_LOG"
+    echo ""
+    
+    # Start in background with nohup and setsid
+    nohup setsid bash "$0" --background > "$BACKGROUND_LOG" 2>&1 &
+    
+    # Get the process ID
+    BG_PID=$!
+    echo "Background process started with PID: $BG_PID"
+    echo "Process ID: $BG_PID" >> "$BACKGROUND_LOG.pid"
+    
+    echo ""
+    echo "========================================================================"
+    echo "Script is now running in background!"
+    echo "- Process ID: $BG_PID"
+    echo "- Log file: $BACKGROUND_LOG" 
+    echo "- PID file: $BACKGROUND_LOG.pid"
+    echo "- Monitor with: tail -f $BACKGROUND_LOG"
+    echo "- Stop with: kill $BG_PID (or kill \$(cat $BACKGROUND_LOG.pid))"
+    echo "========================================================================"
+    
+    exit 0
+fi
+
+# If we reach here, we're running in background mode
+echo "========================================================================"
+echo "                    RUNNING IN BACKGROUND MODE"
+echo "========================================================================"
+echo "Script started in background at: $(date)"
+echo "Process ID: $$"
+echo "========================================================================"
+
 echo "========================================================================"
 echo "                    AUTO-RUN ALL LOAD_DATA MODEL SCRIPTS"
 echo "========================================================================"
@@ -143,3 +189,13 @@ echo "Total Models Processed: $TOTAL_MODELS" >> "$OVERALL_LOG"
 echo "" >> "$OVERALL_LOG"
 echo "Individual model results available in ./results/ folders" >> "$OVERALL_LOG"
 echo "Model checkpoints available in ./checkpoints/ folders" >> "$OVERALL_LOG"
+
+# Background mode completion message
+echo ""
+echo "========================================================================"
+echo "                    BACKGROUND EXECUTION COMPLETED"
+echo "========================================================================"
+echo "Background process (PID: $$) completed at: $(date)"
+echo "All experiments have been finished successfully!"
+echo "You can now check the results in the respective folders."
+echo "========================================================================"
