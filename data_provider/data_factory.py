@@ -9,6 +9,7 @@ data_dict = {
     'ETTm1': Dataset_ETT_minute,
     'ETTm2': Dataset_ETT_minute,
     'custom': Dataset_Custom,
+    'load_data': Dataset_Custom,  # Use Dataset_Custom for load_data
     'm4': Dataset_M4,
     'PSM': PSMSegLoader,
     'MSL': MSLSegLoader,

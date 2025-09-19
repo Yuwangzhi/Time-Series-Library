@@ -130,7 +130,7 @@ class Exp_Long_Term_Forecast(Exp_Basic):
                     loss = criterion(outputs, batch_y)
                     train_loss.append(loss.item())
 
-                if (i + 1) % 100 == 0:
+                if (i + 1) % 1000 == 0:
                     print("\titers: {0}, epoch: {1} | loss: {2:.7f}".format(i + 1, epoch + 1, loss.item()))
                     speed = (time.time() - time_now) / iter_count
                     left_time = speed * ((self.args.train_epochs - epoch) * train_steps - i)
@@ -146,16 +146,23 @@ class Exp_Long_Term_Forecast(Exp_Basic):
                     loss.backward()
                     model_optim.step()
 
-            print("Epoch: {} cost time: {}".format(epoch + 1, time.time() - epoch_time))
+            epoch_cost_time = time.time() - epoch_time
+            print("Epoch: {} cost time: {}".format(epoch + 1, epoch_cost_time))
             train_loss = np.average(train_loss)
             vali_loss = self.vali(vali_data, vali_loader, criterion)
             test_loss = self.vali(test_data, test_loader, criterion)
 
-            print("Epoch: {0}, Steps: {1} | Train Loss: {2:.7f} Vali Loss: {3:.7f} Test Loss: {4:.7f}".format(
-                epoch + 1, train_steps, train_loss, vali_loss, test_loss))
+            epoch_info = "Epoch: {0}, Steps: {1} | Train Loss: {2:.7f} Vali Loss: {3:.7f} Test Loss: {4:.7f}".format(
+                epoch + 1, train_steps, train_loss, vali_loss, test_loss)
+            print(epoch_info)
+            
+            # Write to log file
+            self.write_log(epoch_info)
+            
             early_stopping(vali_loss, self.model, path)
             if early_stopping.early_stop:
                 print("Early stopping")
+                self.write_log("Early stopping triggered")
                 break
 
             adjust_learning_rate(model_optim, epoch + 1, self.args)
@@ -254,12 +261,24 @@ class Exp_Long_Term_Forecast(Exp_Basic):
 
         mae, mse, rmse, mape, mspe = metric(preds, trues)
         print('mse:{}, mae:{}, dtw:{}'.format(mse, mae, dtw))
+        
+        # Write to global result file
         f = open("result_long_term_forecast.txt", 'a')
         f.write(setting + "  \n")
         f.write('mse:{}, mae:{}, dtw:{}'.format(mse, mae, dtw))
         f.write('\n')
         f.write('\n')
         f.close()
+
+        # Write evaluation results to log file
+        self.write_log("\nEVALUATION RESULTS")
+        self.write_log("=" * 50)
+        self.write_log(f"MAE: {mae:.6f}")
+        self.write_log(f"MSE: {mse:.6f}")
+        self.write_log(f"RMSE: {rmse:.6f}")
+        self.write_log(f"MAPE: {mape:.6f}")
+        self.write_log(f"MSPE: {mspe:.6f}")
+        self.write_log(f"DTW: {dtw}")
 
         np.save(folder_path + 'metrics.npy', np.array([mae, mse, rmse, mape, mspe]))
         np.save(folder_path + 'pred.npy', preds)

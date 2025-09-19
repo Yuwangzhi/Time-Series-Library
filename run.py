@@ -29,7 +29,7 @@ if __name__ == '__main__':
 
     # data loader
     parser.add_argument('--data', type=str, required=True, default='ETTh1', help='dataset type')
-    parser.add_argument('--root_path', type=str, default='./data/ETT/', help='root path of the data file')
+    parser.add_argument('--root_path', type=str, default='./dataset/ETTh1/', help='root path of the data file')
     parser.add_argument('--data_path', type=str, default='ETTh1.csv', help='data file')
     parser.add_argument('--features', type=str, default='M',
                         help='forecasting task, options:[M, S, MS]; M:multivariate predict multivariate, S:univariate predict univariate, MS:multivariate predict univariate')
@@ -86,7 +86,7 @@ if __name__ == '__main__':
                         help='the length of segmen-wise iteration of SegRNN')
 
     # optimization
-    parser.add_argument('--num_workers', type=int, default=10, help='data loader num workers')
+    parser.add_argument('--num_workers', type=int, default=1, help='data loader num workers')
     parser.add_argument('--itr', type=int, default=1, help='experiments times')
     parser.add_argument('--train_epochs', type=int, default=10, help='train epochs')
     parser.add_argument('--batch_size', type=int, default=32, help='batch size of train input data')
@@ -197,6 +197,30 @@ if __name__ == '__main__':
                 args.embed,
                 args.distil,
                 args.des, ii)
+
+            # Setup experiment log file
+            results_folder = './results/' + setting + '/'
+            if not os.path.exists(results_folder):
+                os.makedirs(results_folder)
+            
+            log_file_path = results_folder + 'experiment_log.txt'
+            from datetime import datetime
+            
+            # Initialize log file
+            with open(log_file_path, 'w') as log_f:
+                log_f.write("EXPERIMENT LOG\n")
+                log_f.write("=" * 50 + "\n")
+                log_f.write(f"Start Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+                log_f.write(f"Setting: {setting}\n")
+                log_f.write(f"Model: {args.model}\n")
+                log_f.write(f"Dataset: {args.data}\n")
+                log_f.write(f"Prediction: {args.seq_len}->{args.pred_len}\n")
+                log_f.write(f"Train Epochs: {args.train_epochs}\n")
+                log_f.write("\nTRAINING LOG\n")
+                log_f.write("=" * 50 + "\n")
+            
+            # Pass log file path to experiment
+            exp.log_file_path = log_file_path
 
             print('>>>>>>>start training : {}>>>>>>>>>>>>>>>>>>>>>>>>>>'.format(setting))
             exp.train(setting)

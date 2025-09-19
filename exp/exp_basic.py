@@ -48,6 +48,15 @@ class Exp_Basic(object):
 
         self.device = self._acquire_device()
         self.model = self._build_model().to(self.device)
+        self.log_file_path = None  # Will be set by run.py
+
+    def write_log(self, message):
+        """Write message to log file if available"""
+        if hasattr(self, 'log_file_path') and self.log_file_path:
+            with open(self.log_file_path, 'a') as log_f:
+                from datetime import datetime
+                timestamp = datetime.now().strftime('%H:%M:%S')
+                log_f.write(f"[{timestamp}] {message}\n")
 
     def _build_model(self):
         raise NotImplementedError
