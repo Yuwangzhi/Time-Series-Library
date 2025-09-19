@@ -1,7 +1,22 @@
-# Time Series Library (TSLib)
+# Time Series Library (TSLib) - Enhanced with Real-time Logging
+
 TSLib is an open-source library for deep learning researchers, especially for deep time series analysis.
 
 We provide a neat code base to evaluate advanced deep time series models or develop your model, which covers five mainstream tasks: **long- and short-term forecasting, imputation, anomaly detection, and classification.**
+
+## 🚀 **Enhanced Features (2025.09)**
+
+**New Additions:**
+- ✅ **Real-time Experiment Logging System**: Added comprehensive logging functionality that creates `experiment_log.txt` files in results folder with real-time training progress and evaluation metrics
+- ✅ **Load Data Dataset Support**: Full support for electrical load forecasting with pre-configured scripts for PatchTST and Informer models
+- ✅ **Enhanced Experiment Scripts**: Added complete experimental workflows for load_data predictions (96→96, 96→192, 96→336, 96→720)
+- ✅ **Improved User Experience**: Clear progress indicators, result path notifications, and organized experiment management
+
+**Key Improvements:**
+- **Real-time Log Writing**: Experiments now create log files at startup and write training progress in real-time
+- **Individual Experiment Logs**: Each experiment generates its own detailed log file with training history and final metrics
+- **Load Data Scripts**: Ready-to-use scripts for electrical load forecasting experiments
+- **Enhanced Code Structure**: Added `write_log()` method to base experiment class for consistent logging across all models
 
 :triangular_flag_on_post:**News** (2024.10) We have included [[TimeXer]](https://arxiv.org/abs/2402.19072), which defined a practical forecasting paradigm: Forecasting with Exogenous Variables. Considering both practicability and computation efficiency, we believe the new forecasting paradigm defined in TimeXer can be the "right" task for future research.
 
@@ -95,7 +110,50 @@ bash ./scripts/imputation/ETT_script/TimesNet_ETTh1.sh
 bash ./scripts/anomaly_detection/PSM/TimesNet.sh
 # classification
 bash ./scripts/classification/TimesNet.sh
+
+# 🔥 NEW: Load data experiments with automatic logging
+bash ./scripts/long_term_forecast/load_data_script/PatchTST_load_data.sh
+bash ./scripts/long_term_forecast/load_data_script/Informer_load_data.sh
 ```
+
+### 🔥 Load Data Dataset Support
+
+We now provide comprehensive support for **electrical load forecasting** with the `load_data` dataset:
+
+**Available Scripts:**
+- **PatchTST**: `./scripts/long_term_forecast/load_data_script/PatchTST_load_data.sh`
+- **Informer**: `./scripts/long_term_forecast/load_data_script/Informer_load_data.sh`
+- **Single Experiment**: `./scripts/long_term_forecast/load_data_script/PatchTST_load_data_one_time.sh`
+
+**Prediction Horizons Supported:**
+- 96 → 96 (Short-term)
+- 96 → 192 (Medium-term)
+- 96 → 336 (Long-term)
+- 96 → 720 (Very Long-term)
+
+**Data Path:** Place your load data file at `./dataset/load_data/hf_load_data/lf_load_data_20210101-20250807_processed.csv`
+
+### 📊 Real-time Experiment Logging
+
+**Features:**
+- **Automatic Log Creation**: Each experiment automatically creates `experiment_log.txt` in its results folder
+- **Real-time Training Progress**: Training metrics are written to log files in real-time
+- **Comprehensive Results**: Logs include training history, evaluation metrics, and experiment configuration
+- **Individual Experiment Tracking**: Each prediction horizon gets its own detailed log file
+
+**Log File Location:**
+```
+./results/long_term_forecast_load_data_96_96_ModelName_*/experiment_log.txt
+./results/long_term_forecast_load_data_96_192_ModelName_*/experiment_log.txt
+./results/long_term_forecast_load_data_96_336_ModelName_*/experiment_log.txt
+./results/long_term_forecast_load_data_96_720_ModelName_*/experiment_log.txt
+```
+
+**Log File Content:**
+- Experiment configuration and start time
+- Real-time training progress (epoch-by-epoch)
+- Final evaluation metrics (MAE, MSE, RMSE, MAPE, MSPE, DTW)
+- Generated file locations
 
 4. Develop your own model.
 
