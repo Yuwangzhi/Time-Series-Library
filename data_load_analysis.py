@@ -85,23 +85,67 @@ def analyze_load_data_results():
     # Create DataFrame
     df = pd.DataFrame(results)
     
-    # Sort by input_output and MAE for better readability
-    df = df.sort_values(['input_output', 'MAE'])
+    # Custom sorting: 96->96, 96->192, 96->336, 96->720 (by pred_len)
+    df = df.sort_values(['pred_len', 'MSE'])
+    
+    # Print metrics ranking for each experiment group (ordered by pred_len)
+    print(f"\n📊 Experiment Group Rankings (by MSE - Low to High):")
+    ordered_groups = sorted(df['input_output'].unique(), key=lambda x: int(x.split('->')[1]))
+    for group in ordered_groups:
+        group_df = df[df['input_output'] == group].sort_values('MSE')
+        print(f"\n🎯 Group {group}:")
+        print("-" * 80)
+        for rank, (_, row) in enumerate(group_df.iterrows(), 1):
+            print(f"{rank}. {row['model']:12s} | MSE: {row['MSE']:.6f} | MAE: {row['MAE']:.6f} | RMSE: {row['RMSE']:.6f} | MAPE: {row['MAPE']:.6f} | MSPE: {row['MSPE']:.2f}")
+    
+    # Prepare CSV output with groups and overall model means
+    csv_rows = []
+    csv_rows.append(['model', 'seq_len', 'pred_len', 'MSE', 'MAE', 'RMSE', 'MAPE', 'MSPE'])
+    
+    for group in ordered_groups:
+        group_df = df[df['input_output'] == group].sort_values('MSE')
+        
+        # Add group data
+        for _, row in group_df.iterrows():
+            csv_rows.append([
+                row['model'], row['seq_len'], row['pred_len'], 
+                row['MSE'], row['MAE'], row['RMSE'], row['MAPE'], row['MSPE']
+            ])
+        
+        # Add separator line (except for last group)
+        if group != ordered_groups[-1]:
+            csv_rows.append(['model', 'seq_len', 'pred_len', 'MSE', 'MAE', 'RMSE', 'MAPE', 'MSPE'])
+    
+    # Add overall model ranking means at the end
+    csv_rows.append(['model', 'seq_len', 'pred_len', 'MSE', 'MAE', 'RMSE', 'MAPE', 'MSPE'])
+    
+    # Calculate overall model averages and sort by MSE
+    model_avg_metrics = df.groupby('model')[['MAE', 'MSE', 'RMSE', 'MAPE', 'MSPE']].mean().sort_values('MSE')
+    
+    for model, metrics in model_avg_metrics.iterrows():
+        csv_rows.append([
+            model, 'mean', 'mean',
+            metrics['MSE'], metrics['MAE'], metrics['RMSE'], 
+            metrics['MAPE'], metrics['MSPE']
+        ])
+    
+    # Create DataFrame from csv_rows for output
+    df_output = pd.DataFrame(csv_rows[1:], columns=csv_rows[0])
     
     # Save to CSV
     output_file = 'data_load_analysis.csv'
-    df.to_csv(output_file, index=False)
+    df_output.to_csv(output_file, index=False)
     
     print(f"\n📊 Analysis Summary:")
     print(f"Total experiments: {len(df)}")
     print(f"Models: {sorted(df['model'].unique())}")
     print(f"Prediction horizons: {sorted(df['input_output'].unique())}")
     
-    # Show model ranking
-    model_avg = df.groupby('model')['MAE'].mean().sort_values()
-    print(f"\n🏆 Model Ranking (by average MAE):")
-    for rank, (model, mae) in enumerate(model_avg.items(), 1):
-        print(f"{rank}. {model}: {mae:.6f}")
+    # Show overall model ranking by average MSE
+    model_avg_mse = df.groupby('model')['MSE'].mean().sort_values()
+    print(f"\n🏆 Overall Model Ranking (by average MSE):")
+    for rank, (model, mse) in enumerate(model_avg_mse.items(), 1):
+        print(f"{rank}. {model}: {mse:.6f}")
     
     print(f"\n💾 Results saved to: {output_file}")
     
