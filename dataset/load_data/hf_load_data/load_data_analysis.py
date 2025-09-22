@@ -58,7 +58,7 @@ class LoadDataAnalyzer:
         """
         if data_path is None:
             # Use current directory as default
-            self.data_path = "./lf_load_data_20210101-20250807_processed.csv"
+            self.data_path = "./hf_load_data_20210101-20250807_processed.csv"
         else:
             self.data_path = data_path
             

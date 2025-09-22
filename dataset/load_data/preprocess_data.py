@@ -218,7 +218,7 @@ echo "- 频率: t (5分钟间隔)"
 
 if __name__ == "__main__":
     # 数据文件路径
-    input_file = r"D:\ywz_experiment_papers\ywz_7_electric\Time-Series-Library\dataset\load_data\hf_load_data\lf_load_data_20210101-20250807.csv"
+    input_file = r"D:\ywz_experiment_papers\ywz_7_electric\Time-Series-Library\dataset\load_data\hf_load_data\hf_load_data_20210101-20250807.csv"
     
     print("=" * 60)
     print("电力负荷数据预处理工具")
