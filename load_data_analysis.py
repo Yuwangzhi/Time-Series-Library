@@ -133,7 +133,7 @@ def analyze_load_data_results():
     df_output = pd.DataFrame(csv_rows[1:], columns=csv_rows[0])
     
     # Save to CSV
-    output_file = 'data_load_analysis.csv'
+    output_file = 'load_data_analysis.csv'
     df_output.to_csv(output_file, index=False)
     
     print(f"\n📊 Analysis Summary:")

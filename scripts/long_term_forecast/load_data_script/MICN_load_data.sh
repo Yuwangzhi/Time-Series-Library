@@ -28,7 +28,7 @@ python -u run.py \
   --data load_data \
   --features S \
   --seq_len 96 \
-  --label_len 0 \
+  --label_len 96 \
   --pred_len 96 \
   --enc_in 1 \
   --c_out 1 \
@@ -54,7 +54,7 @@ python -u run.py \
   --data load_data \
   --features S \
   --seq_len 96 \
-  --label_len 0 \
+  --label_len 96 \
   --pred_len 192 \
   --enc_in 1 \
   --c_out 1 \
@@ -80,7 +80,7 @@ python -u run.py \
   --data load_data \
   --features S \
   --seq_len 96 \
-  --label_len 0 \
+  --label_len 96 \
   --pred_len 336 \
   --enc_in 1 \
   --c_out 1 \
@@ -106,7 +106,7 @@ python -u run.py \
   --data load_data \
   --features S \
   --seq_len 96 \
-  --label_len 0 \
+  --label_len 96 \
   --pred_len 720 \
   --enc_in 1 \
   --c_out 1 \
