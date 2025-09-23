@@ -1,4 +1,4 @@
-# Time Series Library (TSLib) - Enhanced with Real-time Logging
+# Time Series Library (TSLib) - enhanced
 
 TSLib is an open-source library for deep learning researchers, especially for deep time series analysis.
 
@@ -7,16 +7,11 @@ We provide a neat code base to evaluate advanced deep time series models or deve
 ## 🚀 **Enhanced Features (2025.09)**
 
 **New Additions:**
-- ✅ **Real-time Experiment Logging System**: Added comprehensive logging functionality that creates `experiment_log.txt` files in results folder with real-time training progress and evaluation metrics
-- ✅ **Load Data Dataset Support**: Full support for electrical load forecasting with pre-configured scripts for PatchTST and Informer models
-- ✅ **Enhanced Experiment Scripts**: Added complete experimental workflows for load_data predictions (96→96, 96→192, 96→336, 96→720)
-- ✅ **Improved User Experience**: Clear progress indicators, result path notifications, and organized experiment management
-
-**Key Improvements:**
-- **Real-time Log Writing**: Experiments now create log files at startup and write training progress in real-time
-- **Individual Experiment Logs**: Each experiment generates its own detailed log file with training history and final metrics
-- **Load Data Scripts**: Ready-to-use scripts for electrical load forecasting experiments
-- **Enhanced Code Structure**: Added `write_log()` method to base experiment class for consistent logging across all models
+- ✅ **Real-time Logging**: Comprehensive logging functionality that creates `experiment_log.txt` files with real-time training progress and evaluation metrics.
+- ✅ **Advanced Data Analysis**: Support for in-depth data analysis through various models and tools.
+- ✅ **Enhanced Prediction Capabilities**: Expanded functionalities for both long and short-term forecasting.
+- ✅ **Electricity Load Prediction**: Full support for electrical load forecasting with pre-configured scripts for PatchTST and Informer models.
+- ✅ **Improved User Experience**: Clear progress indicators, result path notifications, and organized experiment management.
 
 :triangular_flag_on_post:**News** (2024.10) We have included [[TimeXer]](https://arxiv.org/abs/2402.19072), which defined a practical forecasting paradigm: Forecasting with Exogenous Variables. Considering both practicability and computation efficiency, we believe the new forecasting paradigm defined in TimeXer can be the "right" task for future research.
 
