@@ -321,66 +321,82 @@ def visualize_mode2(prediction_csv_path, train_data_path,
     print(f"Mode 2 visualization saved to: {output_path}")
     plt.show()
 
-def main():
-    pass  # Function definition for compatibility
+
+import re
+
+def extract_lens_from_filename(filename):
+    """从文件名中自动提取input_len和output_len"""
+    # 支持 inXXX_outYYY 或 inXXX_outYYY_gZ 这样的命名
+    basename = os.path.basename(filename)
+    m = re.search(r'_in(\d+)_out(\d+)', basename)
+    if m:
+        input_len = int(m.group(1))
+        output_len = int(m.group(2))
+        return input_len, output_len
+    # fallback
+    return None, None
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Visualize predictions from predict_.py')
-    
-    # Required arguments
     parser.add_argument('--prediction_csv_path', type=str, required=False,
                         help='Path to prediction results CSV file', 
-                        default=r'./predict/predictions_mode2_start-1_20250730-20250807.csv')
+                        default=r'./predict/output/predictions_Informer_in336_out96_60min_mode1_start-1_20250724-20250811.csv')
     parser.add_argument('--train_data_path', type=str, required=False,
                         help='Path to training dataset for fitting scaler', 
                         default=r'./dataset/load_data/hf_load_data/hf_load_data_20210101-20250807_60min.csv')
-    parser.add_argument('--input_len', type=int, required=False,
-                        help='Input sequence length', default=96)
-    parser.add_argument('--output_len', type=int, required=False,
-                        help='Output/Prediction length', default=96)
     parser.add_argument('--output_path', type=str, required=False,
-                        help='Path to save visualization', 
-                        default='./predict/prediction_visualization.png')
-    
+                        help='Path to save visualization (default: auto)', 
+                        default=None)
+
     args = parser.parse_args()
-    
+
+    # 自动提取input_len和output_len
+    input_len, output_len = extract_lens_from_filename(args.prediction_csv_path)
+    if input_len is None or output_len is None:
+        raise ValueError('Cannot extract input_len/output_len from prediction_csv_path filename!')
+
     # Auto-detect mode from filename
     mode = detect_mode_from_filename(args.prediction_csv_path)
-    
+
     # Validate file existence
     if not os.path.exists(args.prediction_csv_path):
         raise FileNotFoundError(f"Prediction CSV file not found: {args.prediction_csv_path}")
     if not os.path.exists(args.train_data_path):
         raise FileNotFoundError(f"Training data file not found: {args.train_data_path}")
-    
+
+    # 自动生成output_path（与csv同名，仅后缀为png）
+    if args.output_path is None:
+        base = os.path.splitext(os.path.basename(args.prediction_csv_path))[0]
+        args.output_path = os.path.join(os.path.dirname(args.prediction_csv_path), base + '.png')
+
     print("="*80)
     print("Prediction Visualization Tool (Auto Mode Detection)")
     print("="*80)
     print(f"Prediction CSV: {args.prediction_csv_path}")
     print(f"Training Data: {args.train_data_path}")
     print(f"Auto-detected Mode: {mode} ({'Future Prediction' if mode == 1 else 'Historical Sliding Window'})")
-    print(f"Input Length: {args.input_len}")
-    print(f"Output Length: {args.output_len}")
+    print(f"Input Length: {input_len}")
+    print(f"Output Length: {output_len}")
     print(f"Output Path: {args.output_path}")
     print("="*80)
-    
+
     # Run visualization based on auto-detected mode
     if mode == 1:
         visualize_mode1(
             args.prediction_csv_path, 
             args.train_data_path,
-            args.input_len,
+            input_len,
             args.output_path
         )
     elif mode == 2:
         visualize_mode2(
             args.prediction_csv_path, 
             args.train_data_path,
-            args.input_len,
-            args.output_len,
+            input_len,
+            output_len,
             args.output_path
         )
-    
+
     print("="*80)
     print("Visualization completed successfully!")
     print("="*80)

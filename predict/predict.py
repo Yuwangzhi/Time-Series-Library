@@ -12,7 +12,8 @@ from datetime import datetime, timedelta
 # Add project root to Python path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/..')
 
-from models.Informer import Model
+# from models.Informer import Model
+# from models.PatchTST import Model
 from utils.timefeatures import time_features
 
 
@@ -198,6 +199,37 @@ def create_informer_config(seq_len, label_len, pred_len):
             
     return Config()
 
+def create_patchtst_config(seq_len, label_len, pred_len):
+    """Create configuration object for PatchTST model matching training params"""
+    class Config:
+        def __init__(self):
+            # Task settings
+            self.task_name = 'long_term_forecast'
+            self.features = 'S'  # Univariate
+            self.target = 'value'
+
+            # PatchTST architecture
+            self.seq_len = seq_len
+            self.label_len = label_len
+            self.pred_len = pred_len
+            self.enc_in = 1
+            self.dec_in = 1
+            self.c_out = 1
+            self.d_model = 512
+            self.n_heads = 4
+            self.e_layers = 1
+            self.d_layers = 1
+            self.d_ff = 2048
+            self.factor = 3
+            self.dropout = 0.1
+            self.activation = 'gelu'
+            self.embed = 'timeF'
+            self.freq = 'h'
+            # PatchTST-specific
+            self.patch_len = 16
+            self.stride = 8
+
+    return Config()
 
 def load_model_checkpoint(model, ckpt_path, device):
     """Load model weights from checkpoint"""
@@ -242,10 +274,37 @@ def predict_from_csv(args):
 
     print(f"Total input data samples: {len(input_data)}")
 
-    config = create_informer_config(args.input_len, args.label_len, args.output_len)
 
-    model = Model(config).to(device)
-    model = load_model_checkpoint(model, args.ckpt_path, device)
+    # 根据 model_name 选择模型和配置
+    model_name = getattr(args, 'model_name', 'PatchTST')
+    if model_name.lower() == 'informer':
+        from models.Informer import Model as InformerModel
+        config = create_informer_config(args.input_len, args.label_len, args.output_len)
+        model = InformerModel(config).to(device)
+        model_type_str = 'Informer'
+        nh = '8'
+        el = '3'
+    else:
+        from models.PatchTST import Model as PatchTSTModel
+        config = create_patchtst_config(args.input_len, args.label_len, args.output_len)
+        model = PatchTSTModel(config).to(device)
+        model_type_str = 'PatchTST'
+        nh = '4'
+        el = '1'
+
+    # 自动查找ckpt
+    ckpt_path = getattr(args, 'ckpt_path', None)
+    if not ckpt_path or not os.path.exists(ckpt_path):
+        ckpt_dir = f"checkpoints/long_term_forecast_load_data_60min_{args.input_len}_{args.output_len}_{model_type_str}_load_data_ftS_sl{args.input_len}_ll{args.label_len}_pl{args.output_len}_dm512_nh{nh}_el{el}_dl1_df2048_expand2_dc4_fc3_ebtimeF_dtTrue_Exp_0"
+        ckpt_path_candidate = os.path.join(ckpt_dir, "checkpoint.pth")
+        if not os.path.exists(ckpt_path_candidate):
+            raise FileNotFoundError(f"Checkpoint file not found: {ckpt_path or ckpt_path_candidate}\nTried auto path: {ckpt_path_candidate}")
+        print(f"Auto-selected checkpoint: {ckpt_path_candidate}")
+        ckpt_path = ckpt_path_candidate
+    else:
+        print(f"Using user-specified checkpoint: {ckpt_path}")
+
+    model = load_model_checkpoint(model, ckpt_path, device)
     model.eval()
 
     dataset = PredictionDataset(
@@ -346,9 +405,12 @@ def predict_from_csv(args):
             date_range_str = f"Historical{args.output_len}steps"
 
 
+    model_name = getattr(args, 'model_name', 'UnknownModel')
+    granularity = getattr(args, 'granularity', 60)
     output_file = os.path.join(
-        os.path.dirname(args.input_csv_path),
-        f'predictions_mode{args.mode}_start{args.start_idx}_{date_range_str}.csv'
+        './predict/output',
+        # os.path.dirname(args.input_csv_path),
+        f'predictions_{model_name}_in{args.input_len}_out{args.output_len}_{granularity}min_mode{args.mode}_start{args.start_idx}_{date_range_str}.csv'
     )
     results.to_csv(output_file, index=False)
 
@@ -508,17 +570,24 @@ def main():
     parser = argparse.ArgumentParser(description='Predict from CSV using trained model')
     
     # Required arguments
+    parser.add_argument('--model_name', type=str, required=False,
+                        help='Model name: Informer or PatchTST', 
+                        choices=['Informer', 'PatchTST'], default='PatchTST')
+    parser.add_argument('--granularity', type=int, required=False, default=60, choices=[5, 15, 60],
+                        help='Time granularity in minutes (5, 15, 60). Default is 60.')
     parser.add_argument('--input_csv_path', type=str, required=False,
                         help='Path to input CSV file for prediction', 
-                        default=r'./predict/hf_load_data_20210101-20250807_60min.csv')
+                        default=r'./predict/data/hf_load_data_20210101-20250807_60min.csv')
     parser.add_argument('--train_data_path', type=str, required=False,
                         help='Path to training dataset for fitting scaler', 
                         default=r'./dataset/load_data/hf_load_data/hf_load_data_20210101-20250807_60min.csv')
     parser.add_argument('--ckpt_path', type=str, required=False,
                         help='Path to model checkpoint', 
-                        default=r'./checkpoints/long_term_forecast_load_data_60min_96_96_Informer_load_data_ftS_sl96_ll48_pl96_dm512_nh8_el3_dl1_df2048_expand2_dc4_fc3_ebtimeF_dtTrue_Exp_0/checkpoint.pth')
+                        # default=r'./checkpoints/long_term_forecast_load_data_60min_96_96_Informer_load_data_ftS_sl96_ll48_pl96_dm512_nh8_el3_dl1_df2048_expand2_dc4_fc3_ebtimeF_dtTrue_Exp_0/checkpoint.pth')
+                        # default=r'./checkpoints/long_term_forecast_load_data_60min_336_96_PatchTST_load_data_ftS_sl336_ll48_pl96_dm512_nh4_el1_dl1_df2048_expand2_dc4_fc3_ebtimeF_dtTrue_Exp_0/checkpoint.pth')
+    )
     parser.add_argument('--input_len', type=int, required=False,
-                        help='Input sequence length (e.g., 96)', default=96)
+                        help='Input sequence length (e.g., 96)', default=336)
     parser.add_argument('--label_len', type=int, required=False,
                         help='Label length (e.g., 48)', default=48)
     parser.add_argument('--output_len', type=int, required=False,
@@ -540,8 +609,8 @@ def main():
         raise FileNotFoundError(f"Input CSV file not found: {args.input_csv_path}")
     if not os.path.exists(args.train_data_path):
         raise FileNotFoundError(f"Training dataset not found: {args.train_data_path}")
-    if not os.path.exists(args.ckpt_path):
-        raise FileNotFoundError(f"Checkpoint file not found: {args.ckpt_path}")
+    # if not os.path.exists(args.ckpt_path):
+        # raise FileNotFoundError(f"Checkpoint file not found: {args.ckpt_path}")
     
     print("="*80)
     print("CSV Prediction with Informer Model (Enhanced Version)")
