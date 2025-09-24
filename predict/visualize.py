@@ -339,8 +339,8 @@ def extract_lens_from_filename(filename):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Visualize predictions from predict_.py')
     parser.add_argument('--prediction_csv_path', type=str, required=False,
-                        help='Path to prediction results CSV file', 
-                        default=r'./predict/output/predictions_Informer_in336_out96_60min_mode1_start-1_20250724-20250811.csv')
+                        help='Path to prediction results CSV file', # ['Informer', 'PatchTST', 'DLinear']
+                        default=r'./predict/output/predictions_Informer_in336_out96_60min_mode2_start-1_20250720-20250807.csv')
     parser.add_argument('--train_data_path', type=str, required=False,
                         help='Path to training dataset for fitting scaler', 
                         default=r'./dataset/load_data/hf_load_data/hf_load_data_20210101-20250807_60min.csv')

@@ -167,70 +167,6 @@ def load_input_data(input_csv_path, scaler, target_column='value', with_time=Tru
     return data_normalized, time_stamps, dates, df_data.values  # Return original values for comparison
 
 
-def create_informer_config(seq_len, label_len, pred_len):
-    """Create configuration object for Informer model matching training params"""
-    class Config:
-        def __init__(self):
-            # Task settings
-            self.task_name = 'long_term_forecast'
-            self.features = 'S'  # Univariate
-            self.target = 'value'
-            
-            # Model architecture (matching training script exactly)
-            self.seq_len = seq_len
-            self.label_len = label_len
-            self.pred_len = pred_len
-            self.enc_in = 1  # Input features
-            self.dec_in = 1  # Decoder input features
-            self.c_out = 1   # Output features
-            self.d_model = 512
-            self.n_heads = 8
-            self.e_layers = 3
-            self.d_layers = 1
-            self.d_ff = 2048
-            self.factor = 3
-            self.distil = True  # Default is True
-            self.dropout = 0.1
-            self.activation = 'gelu'
-            
-            # Embedding settings
-            self.embed = 'timeF'  # Time features encoding
-            self.freq = 'h'       # Hourly frequency
-            
-    return Config()
-
-def create_patchtst_config(seq_len, label_len, pred_len):
-    """Create configuration object for PatchTST model matching training params"""
-    class Config:
-        def __init__(self):
-            # Task settings
-            self.task_name = 'long_term_forecast'
-            self.features = 'S'  # Univariate
-            self.target = 'value'
-
-            # PatchTST architecture
-            self.seq_len = seq_len
-            self.label_len = label_len
-            self.pred_len = pred_len
-            self.enc_in = 1
-            self.dec_in = 1
-            self.c_out = 1
-            self.d_model = 512
-            self.n_heads = 4
-            self.e_layers = 1
-            self.d_layers = 1
-            self.d_ff = 2048
-            self.factor = 3
-            self.dropout = 0.1
-            self.activation = 'gelu'
-            self.embed = 'timeF'
-            self.freq = 'h'
-            # PatchTST-specific
-            self.patch_len = 16
-            self.stride = 8
-
-    return Config()
-
 def load_model_checkpoint(model, ckpt_path, device):
     """Load model weights from checkpoint"""
     print(f"Loading model checkpoint from: {ckpt_path}")
@@ -277,20 +213,133 @@ def predict_from_csv(args):
 
     # 根据 model_name 选择模型和配置
     model_name = getattr(args, 'model_name', 'PatchTST')
+    
     if model_name.lower() == 'informer':
         from models.Informer import Model as InformerModel
-        config = create_informer_config(args.input_len, args.label_len, args.output_len)
+        
+        # Informer配置
+        class Config:
+            def __init__(self):
+                # Task settings
+                self.task_name = 'long_term_forecast'
+                self.features = 'S'  # Univariate
+                self.target = 'value'
+                
+                # Common architecture settings
+                self.seq_len = args.input_len
+                self.label_len = args.label_len
+                self.pred_len = args.output_len
+                self.enc_in = 1  # Input features
+                self.dec_in = 1  # Decoder input features
+                self.c_out = 1   # Output features
+                self.d_model = 512
+                self.d_ff = 2048
+                self.factor = 3
+                self.dropout = 0.1
+                self.activation = 'gelu'
+                
+                # Embedding settings
+                self.embed = 'timeF'  # Time features encoding
+                self.freq = 'h'       # Hourly frequency
+                
+                # Informer specific settings
+                self.n_heads = 8
+                self.e_layers = 3
+                self.d_layers = 1
+                self.distil = True  # Default is True
+        
+        config = Config()
         model = InformerModel(config).to(device)
         model_type_str = 'Informer'
         nh = '8'
         el = '3'
-    else:
+        
+    elif model_name.lower() == 'dlinear':
+        from models.DLinear import Model as DLinearModel
+        
+        # DLinear配置
+        class Config:
+            def __init__(self):
+                # Task settings
+                self.task_name = 'long_term_forecast'
+                self.features = 'S'  # Univariate
+                self.target = 'value'
+                
+                # Common architecture settings
+                self.seq_len = args.input_len
+                self.label_len = args.label_len
+                self.pred_len = args.output_len
+                self.enc_in = 1  # Input features
+                self.dec_in = 1  # Decoder input features
+                self.c_out = 1   # Output features
+                self.d_model = 512
+                self.d_ff = 2048
+                self.factor = 3
+                self.dropout = 0.1
+                self.activation = 'gelu'
+                
+                # Embedding settings
+                self.embed = 'timeF'  # Time features encoding
+                self.freq = 'h'       # Hourly frequency
+                
+                # DLinear specific settings based on sh script
+                self.e_layers = 2
+                self.d_layers = 1
+                # DLinear doesn't use attention heads, but keep for compatibility
+                self.n_heads = 8
+                # DLinear specific parameters
+                self.moving_avg = 25  # Default moving average window size for decomposition
+        
+        config = Config()
+        model = DLinearModel(config).to(device)
+        model_type_str = 'DLinear'
+        nh = '8'  # Not used in DLinear but kept for checkpoint path compatibility
+        el = '2'
+        
+    elif model_name.lower() == 'patchtst':
         from models.PatchTST import Model as PatchTSTModel
-        config = create_patchtst_config(args.input_len, args.label_len, args.output_len)
+        
+        # PatchTST配置
+        class Config:
+            def __init__(self):
+                # Task settings
+                self.task_name = 'long_term_forecast'
+                self.features = 'S'  # Univariate
+                self.target = 'value'
+                
+                # Common architecture settings
+                self.seq_len = args.input_len
+                self.label_len = args.label_len
+                self.pred_len = args.output_len
+                self.enc_in = 1  # Input features
+                self.dec_in = 1  # Decoder input features
+                self.c_out = 1   # Output features
+                self.d_model = 512
+                self.d_ff = 2048
+                self.factor = 3
+                self.dropout = 0.1
+                self.activation = 'gelu'
+                
+                # Embedding settings
+                self.embed = 'timeF'  # Time features encoding
+                self.freq = 'h'       # Hourly frequency
+                
+                # PatchTST specific settings
+                self.n_heads = 4
+                self.e_layers = 1
+                self.d_layers = 1
+                # PatchTST-specific
+                self.patch_len = 16
+                self.stride = 8
+        
+        config = Config()
         model = PatchTSTModel(config).to(device)
         model_type_str = 'PatchTST'
         nh = '4'
         el = '1'
+        
+    else:
+        raise ValueError(f"Unsupported model: {model_name}")
 
     # 自动查找ckpt
     ckpt_path = getattr(args, 'ckpt_path', None)
@@ -572,7 +621,7 @@ def main():
     # Required arguments
     parser.add_argument('--model_name', type=str, required=False,
                         help='Model name: Informer or PatchTST', 
-                        choices=['Informer', 'PatchTST'], default='PatchTST')
+                        choices=['Informer', 'PatchTST', 'DLinear'], default='DLinear')
     parser.add_argument('--granularity', type=int, required=False, default=60, choices=[5, 15, 60],
                         help='Time granularity in minutes (5, 15, 60). Default is 60.')
     parser.add_argument('--input_csv_path', type=str, required=False,
